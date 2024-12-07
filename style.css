@@ -16,12 +16,22 @@ h1{
     text-align: center;
     color: #232323;
 }
+
+h2{
+    text-align: center;
+}
+
 .main_container{
     max-width: 450px;
     background-color: #F8FAFC;
     padding: 20px;
     border: 1px solid rgba(23,23,23, .1);
     border-radius: 3px;
+    position: absolute;
+    top: 35%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 50%;
 }
 .login_signup_container input[type='text'],
 .login_signup_container input[type='email'],
@@ -94,6 +104,11 @@ h1{
     background-color: #F8FAFC;
     border: 1px solid rgba(23,23,23, .1);
     padding: 10px;
+    position:absolute;
+    top: 50%;
+    left: 50%;
+    transform: tramslate(-50%, -50%);
+    width: 75%;
 }
 
 .profile_container nav ul{
