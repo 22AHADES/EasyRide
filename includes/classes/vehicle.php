@@ -41,7 +41,7 @@ class Vehicle{
     // FETCH ALL USERS WHERE ID IS NOT EQUAL TO MY ID
     function all_vehicles(){
         try{
-            $get_vehicles = $this->db->prepare("SELECT c_name, car_type_name, model_year, manufacturer, seat_capacity, mileage, rate, fuel_type_name, description, color, registration_num, branch_name
+            $get_vehicles = $this->db->prepare("SELECT c_name, car_type_name, model_year, manufacturer, seat_capacity, mileage, rate, fuel_type_name, description, color, registration_num, branch_name, location
                                                 FROM `vehicle_details` as vd
                                                 LEFT JOIN `vehicle` as v ON v.car_id=vd.car_id 
                                                 LEFT JOIN `car_type` as ct ON ct.type_car_id=vd.type_car_id
@@ -68,10 +68,10 @@ class Vehicle{
                                                     JOIN vehicle_details AS vd ON v.car_id = vd.car_id
                                                     JOIN fuel_type AS ft ON vd.fuel_type_id = ft.fuel_type_id
                                                     JOIN car_type AS ct ON vd.type_car_id = ct.type_car_id
-                                                    JOIN branch AS br ON br.branch_id = vd.branch_id
+                                                    JOIN branch AS br ON br.branch_id = vd.vehicle_branch_id
                                                     LEFT JOIN booking AS b ON vd.registration_num = b.vehicle_registration
                                                     AND NOT (b.drop_date < ? OR b.pickup_date > ?)
-                                                    WHERE br.branch_id = ? AND b.vehicle_registration IS NULL;");
+                                                    WHERE br.branch_id = ? AND b.vehicle_registration IS NULL OR b.status = 'canceled';");
 
                 $search_vehicles->execute([$start_date, $end_date, $branch]);
                 if($search_vehicles->rowCount() > 0){
@@ -85,5 +85,22 @@ class Vehicle{
             return null;
         }
     }
+
+// DELETE VEHICLE
+function deleteVehicle($reg_num){
+    $this->registration_num = trim($reg_num);
+    try{
+                    $sql = "DELETE FROM vehicle_details
+                            WHERE registration_num = :registration_num";
+        
+                    $delete_stmt = $this->db->prepare($sql);
+                    $delete_stmt->bindValue(':registration_num',htmlspecialchars($this->registration_num), PDO::PARAM_STR);
+                    $delete_stmt->execute();
+                    return ['successMessage' => 'Delete request submitted.'];                    
+    }
+    catch (PDOException $e) {
+        die($e->getMessage());
+    }
+}
 }
 ?>

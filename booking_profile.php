@@ -1,11 +1,23 @@
 <?php
 require 'includes/init.php';
-$vehicle_data = $vehicle_obj->find_vehicle_by_id($_GET['id']);
+$booking_data = $booking_obj->find_booking_by_id($_GET['id']);
 $all_branches = $branch_obj->get_all_branches();
 
 if(isset($_POST['branch']) && isset($_POST['departure-date']) && isset($_POST['return-date'])){
-    $result = $booking_obj->bookingSubmission($_GET['id'], $_POST['departure-date'], $_SESSION['customer_id'], $_POST['return-date'], $vehicle_data->vehicle_branch_id, $_POST['branch'], $vehicle_data->rate);
+    $result = $booking_obj->bookingUpdate($booking_data->confirmation_num, $_POST['departure-date'], $_POST['return-date'], $_POST['branch']);
   }
+// else if(isset($_POST['branch'])){
+//     $result = $booking_obj->bookingUpdate($booking_data->confirmation_num, $booking_data->pickup_date, $booking_data->drop_date, $_POST['branch'], $booking_data->status);
+// }
+// else if(isset($_POST['status'])){
+//     $result = $booking_obj->bookingUpdate($booking_data->confirmation_num, $booking_data->pickup_date, $booking_data->drop_date, $booking_data->drop_branch_id, $_POST['status']);
+// }
+// else if(isset($_POST['departure-date'])){
+//     $result = $booking_obj->bookingUpdate($booking_data->confirmation_num, $_POST['departure-date'], $booking_data->drop_date, $booking_data->drop_branch_id, $booking_data->status);
+// }
+// else if(isset($_POST['return-date'])){
+//     $result = $booking_obj->bookingUpdate($booking_data->confirmation_num, $booking_data->pickup_date, $_POST['return-date'], $booking_data->drop_branch_id, $booking_data->status);
+// }
 
 ?>
 <!DOCTYPE html>
@@ -26,18 +38,17 @@ if(isset($_POST['branch']) && isset($_POST['departure-date']) && isset($_POST['r
             <div class="img">
                 <!-- Insert picture here -->
             </div>
-            <h1><?php echo  $vehicle_data->c_name;?></h1>
+            <h1><?php echo  $booking_data->confirmation_num;?></h1>
             <nav>
             <ul>
-                <li><a href="profile.php" rel="noopener noreferrer">Home</a></li>
-                <li><a href="mybookings.php" rel="noopener noreferrer">Bookings</a></li>
-                <li><a href="profile.php" rel="noopener noreferrer">Rental History</a></li>
+                <li><a href="employee_profile.php" rel="noopener noreferrer">Home</a></li>
+                <li><a href="employee_profile.php" rel="noopener noreferrer">Rental History</a></li>
                 <li><a href="logout.php" rel="noopener noreferrer">Logout</a></li>
             </ul>
         </nav>
         <div class="background">
-        <div class="booking-form">
-            <h2>Rental Booking Form</h2>
+        <div class="update-booking-form">
+            <h2>Update</h2>
             <form action="" method="post">  
             <label for="branch">Drop off Branch</label>    
             <select name="branch" id="branch" required>
@@ -47,8 +58,8 @@ if(isset($_POST['branch']) && isset($_POST['departure-date']) && isset($_POST['r
                         <?= htmlspecialchars($branch->branch_name); ?>
                 </option>
                 <?php endforeach; ?>
-            </select>
-                <br></br>
+            </select>  
+            <br></br>
            
                 <label for="departure-date">Pick Up Date:</label>
                 <input type="date" name="departure-date" id="departure-date" required>
@@ -58,7 +69,9 @@ if(isset($_POST['branch']) && isset($_POST['departure-date']) && isset($_POST['r
                 <input type="date" name="return-date" id="return-date" required>
                 <br></br>
 
-                <button type="submit">Book Now</button>
+                
+
+                <button type="submit">Submit</button>
             </form>
         </div>
     </div>

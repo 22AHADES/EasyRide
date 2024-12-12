@@ -12,13 +12,14 @@ class Booking{
     protected $drop_employee_email;
     protected $pickup_branch_id;
     protected $drop_branch_id;
+    protected $employee_email;
     protected $amount;
     
     function __construct($db_connection){
         $this->db = $db_connection;
     }
 
-    // SING UP USER
+    // SUBMIT BOOKING
     function bookingSubmission($reg_num, $p_date, $c_id, $d_date, $p_branch_id, $d_branch_id, $amt){
         try{
             $this->vehicle_registration = trim($reg_num);
@@ -70,16 +71,154 @@ class Booking{
     }
     
     // FETCH ALL USERS WHERE ID IS NOT EQUAL TO MY ID
-    function all_bookings($id){
+    function all_bookings(){
         try{
-            $get_bookings = $this->db->prepare("SELECT * FROM `bookings`");
-            $get_bookings->execute([$id]);
+            $get_bookings = $this->db->prepare("SELECT * FROM `booking`");
+            $get_bookings->execute();
+            $get_bookings = $this->db->prepare("SELECT confirmation_num, status, manufacturer, c_name, model_year, seat_capacity, pickup_date, drop_date, b1.branch_name as b1_branch_name, b2.branch_name as b2_branch_name, customer_id
+                                                FROM `booking` as bo
+                                                LEFT JOIN `vehicle_details` as vd ON 
+                                                vd.registration_num=bo.vehicle_registration
+                                                LEFT JOIN `vehicle` as v ON v.car_id=vd.car_id
+                                                LEFT JOIN `branch` as b1 ON b1.branch_id=bo.pickup_branch_id
+                                                LEFT JOIN `branch` as b2 ON b2.branch_id=bo.drop_branch_id");
+            $get_bookings->execute();
             if($get_bookings->rowCount() > 0){
                 return $get_bookings->fetchAll(PDO::FETCH_OBJ);
             }
             else{
                 return false;
             }
+        }
+        catch (PDOException $e) {
+            die($e->getMessage());
+        }
+    }
+
+    // function all_bookings_wo_id(){
+    //     try{
+    //         $get_bookings = $this->db->prepare("SELECT 
+    //         b.confirmation_num, 
+    //         b.status, 
+    //         b.vehicle_registration, 
+    //         b.pickup_date, 
+    //         b.drop_date, 
+    //         b.amount, 
+    //         c.customer_fname, 
+    //         c.customer_lname, 
+    //         pb.branch_name AS pickup_branch,
+    //         db.branch_name AS dropoff_branch,
+    //         de.employee_fname AS do_employee_fn, 
+    //         de.employee_lname AS do_employee_ln,
+    //         pe.employee_fname AS pu_employee_fn,
+    //         pe.employee_lname AS pu_employee_ln
+    //     FROM 
+    //         booking AS b
+    //     JOIN 
+    //         customers AS c ON c.customer_id = b.customer_id
+    //     JOIN 
+    //         branch AS pb ON b.pickup_branch_id = pb.branch_id
+    //     JOIN 
+    //         branch AS db ON b.drop_branch_id = db.branch_id
+    //     JOIN 
+    //         employee AS de ON de.employee_email = b.drop_employee_email
+    //     JOIN 
+    //         employee AS pe ON pe.employee_email = b.pickup_employee_email");
+
+    //         $get_bookings->execute();
+    //         if($get_bookings->rowCount() > 0){
+    //             return $get_bookings->fetchAll(PDO::FETCH_OBJ);
+        // SUBMIT BOOKING
+    function bookingUpdate($conf_num, $p_date, $d_date, $d_branch_id){
+        try{
+            $this->confirmation_num = trim($conf_num);
+            $this->pickup_date = trim($p_date);
+            $this->drop_date = trim($d_date);
+            $this->drop_branch_id = trim($d_branch_id);
+
+            if(!empty($this->confirmation_num) && !empty($this->pickup_date) && !empty($this->drop_date)){
+                        $sql = "UPDATE `booking` 
+                                SET
+                                    drop_branch_id = :drop_branch_id,
+                                    pickup_date = :pickup_date,
+                                    drop_date = :drop_date
+                                WHERE confirmation_num = :confirmation_num";
+            
+                        $booking_stmt = $this->db->prepare($sql);
+                        //BIND VALUES
+                        $booking_stmt->bindValue(':confirmation_num',htmlspecialchars($this->confirmation_num), PDO::PARAM_STR);
+                        $booking_stmt->bindValue(':pickup_date',htmlspecialchars($this->pickup_date), PDO::PARAM_STR);
+                        $booking_stmt->bindValue(':drop_date',htmlspecialchars($this->drop_date), PDO::PARAM_STR);
+                        $booking_stmt->bindValue(':drop_branch_id',$this->drop_branch_id, PDO::PARAM_STR);
+                        $booking_stmt->execute();
+                        return ['successMessage' => 'Booking update submitted.'];                   
+            }
+            else{
+                return ['errorMessage' => 'Please fill in all the required fields.'];
+            } 
+        }
+        catch (PDOException $e) {
+            die($e->getMessage());
+        }
+    }
+
+    function get_all_statuses(){
+        try{
+            $get_statuses = $this->db->prepare("SELECT * FROM `status_type`;");
+            $get_statuses->execute();
+            if($get_statuses->rowCount() > 0){
+                return $get_statuses->fetchAll(PDO::FETCH_OBJ);
+            }
+            else{
+                return false;
+            }
+        }
+        catch (PDOException $e) {
+            die($e->getMessage());
+        }
+    }
+
+    function bookingStatusUpdate($conf_num, $new_status, $new_email){
+        try{
+            $this->confirmation_num = trim($conf_num);
+            $this->status = trim($new_status);
+            $this->employee_email = trim($new_email);
+
+            if(!empty($this->confirmation_num) && !empty($this->status) && !empty($this->employee_email)){
+                if ($new_status === 'ongoing'){
+                    $sql = "UPDATE `booking` 
+                    SET
+                        status = :status,
+                        pickup_employee_email = :employee_email
+                    WHERE confirmation_num = :confirmation_num";
+                }
+                else if ($new_status === 'completed'){
+                    $sql = "UPDATE `booking` 
+                    SET
+                        status = :status,
+                        drop_employee_email = :employee_email
+                    WHERE confirmation_num = :confirmation_num";
+                }
+                else{
+                    $sql = "UPDATE `booking` 
+                    SET
+                        status = :status
+                    WHERE confirmation_num = :confirmation_num";
+                }
+            
+                $booking_stmt = $this->db->prepare($sql);
+                //BIND VALUES
+                $booking_stmt->bindValue(':confirmation_num',htmlspecialchars($this->confirmation_num), PDO::PARAM_STR);
+                $booking_stmt->bindValue(':status',htmlspecialchars($this->status), PDO::PARAM_STR);
+                if ($new_status === 'ongoing' || $new_status === 'completed'){
+                    $booking_stmt->bindValue(':employee_email',htmlspecialchars($this->employee_email), PDO::PARAM_STR);
+                }
+                $booking_stmt->execute();
+                return ['successMessage' => 'Booking update submitted.'];                   
+            }
+            else{
+                return ['errorMessage' => 'Please fill in all the required fields.'];
+            } 
         }
         catch (PDOException $e) {
             die($e->getMessage());
